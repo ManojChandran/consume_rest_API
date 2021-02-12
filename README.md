@@ -1,2 +1,6 @@
-# consume_rest_API
-Go example code to demonstrate External API consumption.
+# CONSUME AN EXTERNAL API
+This repository is an example go code to demonstrate, how to consume an external API.
+
+# Reference
+https://golang.org/pkg/net/http/
+https://httpbin.org/ip
