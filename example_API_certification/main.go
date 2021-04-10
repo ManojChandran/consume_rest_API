@@ -8,6 +8,21 @@ import (
 	"strconv"
 )
 
+type request struct {
+	endpoint    string
+	team        string
+	year        string
+	matchplayed string
+	page        string
+}
+
+func (r *request) setRequest(endpoint, team, year, matchplayed string) {
+	r.endpoint = endpoint
+	r.team = team
+	r.year = year
+	r.matchplayed = matchplayed
+}
+
 // https://mholt.github.io/json-to-go/
 type response struct {
 	Page       int `json:"page"`
@@ -25,22 +40,13 @@ type response struct {
 	} `json:"data"`
 }
 
-type request struct {
-	endpoint    string
-	team        string
-	year        string
-	matchplayed string
-	page        string
-}
-
-func (r *request) teamData() response {
+func (r *request) teamData(page string) response {
 	var origin response
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", r.endpoint, nil)
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-
 	// Add custom details to HTTP header request
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
@@ -57,8 +63,6 @@ func (r *request) teamData() response {
 	req.URL.RawQuery = q.Encode()
 
 	fmt.Println(req.URL.String())
-	// Do sends an HTTP request and returns an HTTP response,
-	// following policy (such as redirects, cookies, auth) as configured on the client.
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -70,7 +74,6 @@ func (r *request) teamData() response {
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-
 	json.Unmarshal(data, &origin)
 	return origin
 }
@@ -87,32 +90,23 @@ func (res *response) calculateGoals() int32 {
 }
 
 func main() {
-	fmt.Println("calling an API")
-	var r request
-	var awaygoals, homegoals int32
-	var i int32
+	var awaygoals, homegoals, i int32
 	var homerecord, awayrecord response
+	team := new(request)
 	//"https://jsonmock.hackerrank.com/api/football_competition"
-	r.endpoint = "https://jsonmock.hackerrank.com/api/football_matches"
-	r.team = "Barcelona"
-	r.year = "2011"
-	r.matchplayed = "home"
-
+	team.setRequest("https://jsonmock.hackerrank.com/api/football_matches", "Barcelona", "2011", "home")
 	for i = 1; len(homerecord.Data) == 0; i++ {
-		r.page = strconv.Itoa(int(i))
-		homerecord = r.teamData()
+		team.page = strconv.Itoa(int(i))
+		homerecord = team.teamData(team.page)
 		homegoals = homegoals + homerecord.calculateGoals()
-		//fmt.Println(homerecord.calculateGoals())
 	}
-
-	r.matchplayed = "away"
-
+	team.setRequest("https://jsonmock.hackerrank.com/api/football_matches", "Barcelona", "2011", "away")
 	for i = 1; len(awayrecord.Data) == 0; i++ {
-		r.page = strconv.Itoa(int(i))
-		awayrecord = r.teamData()
+		team.page = strconv.Itoa(int(i))
+		awayrecord = team.teamData(team.page)
 		awaygoals = awaygoals + awayrecord.calculateGoals()
-		//fmt.Println(awayrecord.calculateGoals())
 	}
 
-	fmt.Println(awaygoals, "+", homegoals, "=", awaygoals+homegoals)
+	fmt.Println(awaygoals + homegoals)
 }
+
